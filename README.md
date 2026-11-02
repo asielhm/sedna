@@ -43,3 +43,18 @@ GitHub Pages supports static sites and cannot run this Python/Selenium applicati
 ## Extensión de Chrome (alternativa sin servidor)
 
 La carpeta [`extension/`](extension/README.md) contiene una extensión Manifest V3 instalable manualmente. Lee los Excel en la computadora del profesor y completa una clase en la sesión abierta de Sedna. El profesor revisa y guarda con Aceptar en Sedna. Consultá las instrucciones de instalación y prueba en su README; la integración real todavía requiere verificación con una cuenta de Sedna.
+
+## Sitio de descargas en GitHub Pages
+
+`docs/` contiene una web estática con instalación, privacidad e historial de descargas. Incluye el ZIP de la extensión, sin archivos de alumnos ni dependencias de desarrollo.
+
+Para activarla en GitHub: **Settings → Pages → Build and deployment → Source: GitHub Actions**. Después ejecutá **Actions → Publish downloads website → Run workflow** si el despliegue inicial no se ejecutó correctamente. La dirección prevista es `https://asielhm.github.io/sedna/`; verificá el enlace final en Pages o en el resultado del workflow. Este sitio distribuye la extensión, no ejecuta el backend Python.
+
+Para publicar una actualización:
+
+1. Modificá y probá la extensión (`npm ci --prefix extension` y `npm test --prefix extension`).
+2. Aumentá `version` en `extension/manifest.json`.
+3. Ejecutá `python scripts/package_extension.py`. Genera un ZIP con nombre de versión y actualiza `docs/versions.json`. Conservá los ZIP anteriores para mantener el historial. El script rechaza cambiar un ZIP existente bajo la misma versión.
+4. Subí los cambios a `main`. El workflow de Pages publica `docs/` y la web muestra la versión nueva automáticamente.
+
+Los profesores descargan y actualizan manualmente la extensión. GitHub Pages no actualiza extensiones instaladas automáticamente.
