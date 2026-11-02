@@ -42,7 +42,7 @@ GitHub Pages supports static sites and cannot run this Python/Selenium applicati
 
 ## Extensión de Chrome (alternativa sin servidor)
 
-La carpeta [`extension/`](extension/README.md) contiene una extensión Manifest V3 instalable manualmente. Lee los Excel en la computadora del profesor y completa una clase en la sesión abierta de Sedna. El profesor revisa y guarda con Aceptar en Sedna. Consultá las instrucciones de instalación y prueba en su README; la integración real todavía requiere verificación con una cuenta de Sedna.
+La carpeta [`extension/`](extension/README.md) contiene una extensión Manifest V3 instalable manualmente. Lee los Excel en la computadora del profesor y carga todas las hojas en la sesión abierta de Sedna, guarda cada clase y verifica los valores mediante una nueva lectura sin caché, después de que el profesor confirma todas las correspondencias. Consultá las instrucciones de instalación y prueba en su README; la integración real todavía requiere verificación con una cuenta de Sedna.
 
 ## Sitio de descargas en GitHub Pages
 

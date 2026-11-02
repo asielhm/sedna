@@ -1,8 +1,10 @@
 const $ = id => document.getElementById(id);
 let groups = [], expected = null, busy = false;
+let mappingOptions = [];
+window.addEventListener('beforeunload', event => { if (busy) { event.preventDefault(); event.returnValue = ''; } });
 const tabId = Number(new URLSearchParams(location.hash.slice(1)).get('tab'));
 function status(message) { $('status').textContent = message; }
-function invalidate() { expected = null; $('confirm').checked = false; $('confirm').disabled = true; $('fill').disabled = true; $('mapping').textContent = 'Volvé a leer la clase y período de Sedna.'; }
+function invalidate() { expected = null; $('confirm').checked = false; $('confirm').disabled = true; $('fill').disabled = true; $('mapping').textContent = 'Volvé a leer las clases de Sedna.'; $('class-mapping').replaceChildren(); }
 function preview() {
   invalidate();
   const group = groups[Number($('sheet').value)];
@@ -19,7 +21,7 @@ function preview() {
   }
   $('preview').append(table);
 }
-function resetFile() { groups = []; $('file').value = ''; $('sheet').replaceChildren(); $('sheet').disabled = true; preview(); status(''); }
+function resetFile() { $('results').replaceChildren(); groups = []; $('file').value = ''; $('sheet').replaceChildren(); $('sheet').disabled = true; preview(); status(''); }
 function periods() { $('period').replaceChildren(...SednaCore.periods[$('mode').value].map(text => new Option(text,text))); resetFile(); }
 $('mode').addEventListener('change', periods);
 $('period').addEventListener('change', resetFile);
@@ -36,7 +38,7 @@ $('file').addEventListener('change', async () => {
     if ($('file').files[0] !== file || mode !== $('mode').value || period !== $('period').value) return;
     groups = SednaCore.parse(book, mode, period);
     $('sheet').replaceChildren(...groups.map((g,i) => new Option(`${i+1}. ${g.name}`,String(i))));
-    $('sheet').disabled = false; preview(); status('Archivo validado. Elegí la hoja y leé la clase de Sedna.');
+    $('sheet').disabled = false; preview(); status('Archivo validado. Leé las clases de Sedna y revisá la correspondencia de todas las hojas.');
   } catch (error) { status(error.message); }
 });
 async function execute(action, extra = {}) {
@@ -51,26 +53,52 @@ async function execute(action, extra = {}) {
 function lock(value) {
   busy = value;
   for (const id of ['mode','period','file','sheet','template','inspect','confirm','fill']) $(id).disabled = value;
+  document.querySelectorAll('.class-map').forEach(element => element.disabled = value);
   if (!value) { $('sheet').disabled = !groups.length; $('inspect').disabled = !groups.length; $('confirm').disabled = !expected; $('fill').disabled = !expected || !$('confirm').checked; }
 }
 $('inspect').addEventListener('click', async () => {
   if (busy) return;
   invalidate(); lock(true);
   try {
-    const response = await execute('inspect'); expected = response.current;
-    $('mapping').textContent = `Hoja: ${groups[Number($('sheet').value)].name} → Clase Sedna: ${expected.class.text} · Período: ${expected.period.text}. Verificá esta correspondencia.`;
-    status('Revisá la correspondencia y marcá la confirmación.');
-  } catch (error) { status(error.message); } finally { lock(false); }
+    await execute('inspect');
+    const response = await execute('state'); expected = response.current;
+    mappingOptions = response.classes;
+    if (mappingOptions.length < groups.length) throw Error('Hay menos clases disponibles en Sedna que hojas en el Excel.');
+    const labels = groups.map((group,index) => {
+      const label = document.createElement('label'); label.textContent = `Hoja ${index+1}: ${group.name} → Clase Sedna`;
+      const select = document.createElement('select'); select.className = 'class-map';
+      select.append(...mappingOptions.map(c => new Option(c.text,c.value)));
+      select.selectedIndex = index;
+      select.addEventListener('change', () => { $('confirm').checked = false; $('fill').disabled = true; });
+      label.append(select); return label;
+    });
+    $('class-mapping').replaceChildren(...labels);
+    $('mapping').textContent = `${groups.length} hojas · Período: ${expected.period.text}. Revisá cada correspondencia; el orden inicial sigue el desplegable de Sedna.`;
+    status('Confirmá TODAS las correspondencias. Se validarán todas las clases antes del primer guardado.');
+  } catch (error) { invalidate(); status(error.message); } finally { lock(false); }
 });
 $('confirm').addEventListener('change', () => { $('fill').disabled = !expected || !$('confirm').checked; });
 $('fill').addEventListener('click', async () => {
   if (busy || !expected || !$('confirm').checked) return;
+  const mapping = [...document.querySelectorAll('.class-map')].map(select => ({value:select.value,text:select.selectedOptions[0].textContent}));
+  if(mapping.length !== groups.length || new Set(mapping.map(c => c.value)).size !== groups.length) { status('Elegí una clase distinta para cada hoja.'); return; }
+  const automation = createSednaAutomation(tabId,{mode:$('mode').value,period:$('period').value});
   lock(true);
   try {
-    const response = await execute('fill',{expected,students:groups[Number($('sheet').value)].students});
-    status(`Se completaron ${response.count} alumnos (${response.fields} campos). NO se guardaron todavía. Volvé a Sedna, revisá las notas y pulsá Aceptar. Para otra clase, seleccionála en Sedna y elegí su hoja aquí.`);
-  } catch (error) { status(error.message); } finally { invalidate(); lock(false); }
+    await automation.open();
+    const report = await runSednaBatch({groups,mapping,execute:automation.execute,fresh:automation.fresh,check:automation.check,progress:(message,results) => {
+      status(message); showResults(results);
+    }});
+    showResults(report.results);
+    status(report.ok ? 'Todas las clases fueron guardadas y sus notas verificadas mediante una nueva lectura de Sedna.' : `Carga detenida: ${report.error} No se reintentó el guardado. Revisá el resultado de cada clase antes de volver a ejecutar.`);
+  } catch (error) { status(error.message); }
+  finally { await automation.close(); invalidate(); lock(false); }
 });
+function showResults(results) {
+  $('results').replaceChildren(...results.map(result => {
+    const p = document.createElement('p'); p.textContent = `${result.sheet}: ${result.status}`; return p;
+  }));
+}
 $('template').addEventListener('click', async () => {
   try {
     const book = new ExcelJS.Workbook(); const sheet = book.addWorksheet('Clase 1');

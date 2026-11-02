@@ -1,11 +1,22 @@
 {
   "manifest_version": 3,
   "name": "Sedna · Carga desde Excel",
-  "version": "0.1.0",
-  "description": "Completa calificaciones desde Excel usando tu sesión de Sedna. Guardado manual por clase.",
-  "permissions": ["scripting"],
-  "host_permissions": ["https://sedna.sanandres.esc.edu.ar/*"],
-  "action": {"default_title": "Abrir asistente de Sedna"},
-  "background": {"service_worker": "background.js"},
-  "content_security_policy": {"extension_pages": "script-src 'self'; object-src 'none'; connect-src 'none'"}
+  "version": "0.2.0",
+  "description": "Carga todas las clases del Excel, guarda y verifica las notas al volver a leer Sedna.",
+  "permissions": [
+    "scripting",
+    "debugger"
+  ],
+  "host_permissions": [
+    "https://sedna.sanandres.esc.edu.ar/*"
+  ],
+  "action": {
+    "default_title": "Abrir asistente de Sedna"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; connect-src 'none'"
+  }
 }

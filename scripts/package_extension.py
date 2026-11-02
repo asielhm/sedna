@@ -10,7 +10,7 @@ version = json.loads((source / 'manifest.json').read_text())['version']
 destination = ROOT / 'docs' / 'downloads'
 destination.mkdir(parents=True, exist_ok=True)
 archive_path = destination / f'sedna-extension-{version}.zip'
-files = [source / name for name in ['manifest.json', 'background.js', 'core.js', 'page.js', 'ui.js', 'index.html', 'style.css', 'README.md', 'vendor/exceljs.min.js', 'vendor/EXCELJS-LICENSE']]
+files = [source / name for name in ['manifest.json', 'background.js', 'batch.js', 'automation.js', 'core.js', 'page.js', 'ui.js', 'index.html', 'style.css', 'README.md', 'vendor/exceljs.min.js', 'vendor/EXCELJS-LICENSE']]
 from io import BytesIO
 buffer = BytesIO()
 with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as archive:

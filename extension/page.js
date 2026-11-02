@@ -12,10 +12,27 @@ function sednaPage(action, payload) {
     if (location.origin !== 'https://sedna.sanandres.esc.edu.ar') throw Error('La pestaña no es Sedna.');
     const classElement = document.querySelector('[name="ctl00$ContentPlaceHolder1$CmbOpcion"]');
     const periodElement = document.getElementById('ContentPlaceHolder1_' + (payload.mode === 'cuatrimestrales' ? 'CmbPeriodo' : 'CmbRendimiento'));
+    const token = globalThis.__sednaDocumentToken ||= crypto.randomUUID();
     const current = {class: selected(classElement), period: selected(periodElement), url: location.href};
+    if (action === 'state') return {ok:true, token, ready: document.readyState === 'complete', current, classes:[...classElement.options].filter(o => !o.disabled).map(o => ({value:o.value,text:o.textContent.trim()}))};
+    if (action === 'select') {
+      const element = payload.kind === 'period' ? periodElement : classElement;
+      const options = [...element.options].filter(o => !o.disabled && (payload.kind === 'period' ? norm(o.textContent) === norm(payload.period) : o.value === payload.value));
+      if (options.length !== 1) throw Error('No se encontró una opción única para clase o período.');
+      if (element.value === options[0].value) return {ok:true, token, changed:false};
+      const value = options[0].value;
+      setTimeout(() => { element.value = value; element.dispatchEvent(new Event('change',{bubbles:true})); }, 50);
+      return {ok:true, token, changed:true};
+    }
     if (norm(current.period.text) !== norm(payload.period)) throw Error('El período de Sedna no coincide con el seleccionado en la extensión.');
     if (action === 'inspect') return {ok: true, current};
     if (JSON.stringify(current) !== JSON.stringify(payload.expected)) throw Error('La clase o período cambió. Volvé a revisar la correspondencia.');
+    if (action === 'save') {
+      const button = document.getElementById('ContentPlaceHolder1_btnaceptar');
+      if (!button || button.disabled) throw Error('No se encontró Aceptar disponible.');
+      setTimeout(() => button.click(), 50);
+      return {ok:true, token};
+    }
     const changes = [], used = new Set();
     const competencies = ['Colaboración','Creatividad','Pens.Crítico','Comunicación','Carácter','Ciudadanía'];
     for (const student of payload.students) {
@@ -30,6 +47,12 @@ function sednaPage(action, payload) {
         used.add(element); changes.push({element, value:String(value), previous:element.value});
       }
     }
+    if (action === 'verify') {
+      const mismatches = changes.filter(item => item.previous !== item.value);
+      if (mismatches.length) throw Error(`Sedna no devolvió las notas esperadas en ${mismatches.length} campos.`);
+      return {ok:true, count:payload.students.length, fields:changes.length, current};
+    }
+    if (action === 'preflight') return {ok:true, count:payload.students.length, fields:changes.length, current};
     // Do not dispatch change: ASP.NET onchange handlers may submit the form mid-fill.
     // Native Aceptar submits the selected values together after the teacher's review.
     try {

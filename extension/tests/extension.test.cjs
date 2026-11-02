@@ -61,3 +61,13 @@ test('maps academic score to 5 minus score and keeps competencies zero', () => {
  assert.equal(p.run('fill',{...payload,expected,students:[student]}).ok,true);
  assert.equal(academic.value,'1');
 });
+
+test('readback rejects differing fields and never changes persisted values',()=>{
+ const p=page(),select=p.field('cmbNota',[0,8]);
+ const payload={mode:'cuatrimestrales',period:'Primer cuatrimestre'};
+ const expected=p.run('inspect',payload).current;
+ assert.equal(p.run('verify',{...payload,expected,students:[{Alumno:'Alumno',Nota:8}]}).ok,false);
+ assert.equal(select.value,'0');
+ select.value='8';
+ assert.equal(p.run('verify',{...payload,expected,students:[{Alumno:'Alumno',Nota:8}]}).ok,true);
+});

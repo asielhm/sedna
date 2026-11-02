@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.2.0",
+    "file": "downloads/sedna-extension-0.2.0.zip",
+    "bytes": 272358,
+    "sha256": "ed434543b34f9ad8dde8b41b322282661ab4e249803975f4f9ca017a630288f0"
+  },
+  {
     "version": "0.1.0",
     "file": "downloads/sedna-extension-0.1.0.zip",
     "bytes": 267878,
