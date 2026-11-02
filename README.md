@@ -39,3 +39,7 @@ Validated both user-provided formats: `CuatrimestralesAHM.xlsx` and `Segunda val
 The repository contains the complete website: `app.py` serves the backend, `templates/index.html` is the page, and `static/` contains its CSS and JavaScript. GitHub Actions runs the test suite for pushes and pull requests.
 
 GitHub Pages supports static sites and cannot run this Python/Selenium application or connect it to Sedna. To use the complete app, run it locally with the commands above, or deploy it to a Python-capable server with Chrome/Chromium and ChromeDriver. See the hosting requirements above before making it publicly accessible. No live Sedna upload has been verified yet.
+
+## Extensión de Chrome (alternativa sin servidor)
+
+La carpeta [`extension/`](extension/README.md) contiene una extensión Manifest V3 instalable manualmente. Lee los Excel en la computadora del profesor y completa una clase en la sesión abierta de Sedna. El profesor revisa y guarda con Aceptar en Sedna. Consultá las instrucciones de instalación y prueba en su README; la integración real todavía requiere verificación con una cuenta de Sedna.
